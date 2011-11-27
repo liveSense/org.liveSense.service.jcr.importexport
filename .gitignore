@@ -1,0 +1,7 @@
+.svn
+.hg
+/target
+/.settings
+/.project
+/.classpath
+/nbactions.xml
