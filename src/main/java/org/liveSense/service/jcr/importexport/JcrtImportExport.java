@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -59,11 +58,9 @@ public class JcrtImportExport {
 	private String startParth = DEFAULT_START_PATH;
 	
 
-	public static String exportRepository(SlingRepository repository, String workspace, String path, String startPath) throws Exception {
+	public static String exportRepository(SlingRepository repository, String workspace, String path, String startPath, boolean system) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HH:mm:SS");
 		
-		if (startPath == null || "".equals(startPath))
-			startPath = "/";
 		if (workspace == null || "".equals(workspace))
 			workspace = repository.getDefaultWorkspace();
 		
@@ -75,6 +72,9 @@ public class JcrtImportExport {
 			log.error("Could not get session",e);
 			throw new Exception("Could not get JCR Session",e);
 		}
+		if (startPath == null || "".equals(startPath))
+			startPath = session.getRootNode().getPath();
+
 		
 		String d = sdf.format(new Date());
 		String filepath = path+"/"+workspace+"-"+d+".xml.gz";
@@ -88,7 +88,11 @@ public class JcrtImportExport {
           		  GZIPOutputStream(new BufferedOutputStream(os));
             
             //export all including binary, recursive
-            session.exportDocumentView(startPath, out, false, false);
+            if (system) {
+            	session.exportSystemView(startPath, out, false, false);
+            } else {
+            	session.exportDocumentView(startPath, out, false, false);            	
+            }
             out.flush();
             out.close();
             os.close();
@@ -105,11 +109,9 @@ public class JcrtImportExport {
 	}
 
 	
-	public static String importRepository(SlingRepository repository, String workspace, String path, String startPath) throws Exception {
+	public static String importRepository(SlingRepository repository, String workspace, String path, String startPath, int behaviour) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HH:mm:SS");
 		
-		if (startPath == null || "".equals(startPath))
-			startPath = "/";
 		if (workspace == null || "".equals(workspace))
 			workspace = repository.getDefaultWorkspace();
 		
@@ -121,6 +123,8 @@ public class JcrtImportExport {
 			log.error("Could not get session",e);
 			throw new Exception("Could not get JCR Session",e);
 		}
+		if (startPath == null || "".equals(startPath))
+			startPath = session.getRootNode().getPath();
 		
 		String d = sdf.format(new Date());
 		String filepath = path;
@@ -131,9 +135,43 @@ public class JcrtImportExport {
         try {
         	FileInputStream fis = new FileInputStream(f);
             GZIPInputStream gs = new GZIPInputStream(fis);
-        	            
+        	
+            /*
             //import all
-            session.importXML(startPath, gs, ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING );
+            if ("security".equals(workspace)) {
+            	final UserManager userManager = AccessControlUtil.getUserManager(session);
+            	final PrincipalManager principalManager = AccessControlUtil.getPrincipalManager(session);
+            	UserImporter importer = new UserImporter();
+            	JackrabbitImporterSession jsession = new JackrabbitImporterSession(session, userManager, principalManager);
+            	importer.init(jsession, 
+            			new DefaultNamePathResolver(session), 
+            			false, 
+            			ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING, 
+            			new ReferenceChangeTracker());
+            	//ImportHandler ih = new ImportHandler(importer, );
+                //new ParsingContentHandler(ih).parse(in);
+            } else {
+                session.importXML(startPath, gs, ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING );
+            }
+			*/
+
+            // For security workspace we create UserImporter
+            /*
+            if ("security".equals(workspace)) {
+	            final UserManager userManager = AccessControlUtil.getUserManager(session);
+	        	final PrincipalManager principalManager = AccessControlUtil.getPrincipalManager(session);
+	        	UserImporter importer = new UserImporter();
+	        	JackrabbitImporterSession jsession = new JackrabbitImporterSession(session, userManager, principalManager);
+	        	importer.init(jsession, 
+	        			new DefaultNamePathResolver(session), 
+	        			false, 
+	        			ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING, 
+	        			new ReferenceChangeTracker());
+            }
+			*/
+            session.importXML(startPath, gs, behaviour);
+           
+            session.save();
             gs.close();
             fis.close();
     		log.info("Restoring repository: "+workspace+"... OK");

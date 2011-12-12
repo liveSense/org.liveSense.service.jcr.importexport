@@ -25,6 +25,7 @@ import java.net.URLEncoder;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
+import javax.jcr.ImportUUIDBehavior;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +40,19 @@ import org.osgi.framework.ServiceRegistration;
 public class JcrImportExportWebConsolePlugin extends
         HttpServlet {
 
+	
+	public enum ImportBehaviour {
+		Remove_Existing(ImportUUIDBehavior.IMPORT_UUID_COLLISION_REMOVE_EXISTING),
+		Replace_Existing(ImportUUIDBehavior.IMPORT_UUID_COLLISION_REPLACE_EXISTING),
+		Throw(ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW),
+		Create_New(ImportUUIDBehavior.IMPORT_UUID_CREATE_NEW);
+
+		private int num;
+		ImportBehaviour(int num) {
+			this.num = num;
+		}
+	}
+	
     private static final long serialVersionUID = 0;
 
     private static final String ATTR_SUBMIT = "plugin.submit";
@@ -46,6 +60,8 @@ public class JcrImportExportWebConsolePlugin extends
     private static final String PAR_WORKSPACE= "repository";
     private static final String PAR_DEFAULT_PATH = "backuppath";
     private static final String PAR_START_PATH = "startpath";
+    private static final String PAR_EXPORT_TYPE = "exporttype";
+    private static final String PAR_IMPORT_BEHAVIOUR = "importbehaviour";
 
     private static final String PAR_MSG = "msg";
 
@@ -100,6 +116,13 @@ public class JcrImportExportWebConsolePlugin extends
         final String backupPath = getParameterValue(request, PAR_DEFAULT_PATH, defaultPath);
         final String workspace = getParameterValue(request, PAR_WORKSPACE, defaultWorkspace);
         final String startPath = getParameterValue(request, PAR_START_PATH, defaultStartPath);
+        final String exportType = getParameterValue(request, PAR_EXPORT_TYPE, "system");
+        ImportBehaviour behaviour = ImportBehaviour.Replace_Existing;
+        try {
+        		behaviour = ImportBehaviour.valueOf(ImportBehaviour.class, getParameterValue(request, PAR_IMPORT_BEHAVIOUR, ImportBehaviour.Replace_Existing.toString()));
+        } catch (Exception e) {
+		}
+
         final String msg = getParameterValue(request, PAR_MSG, null);
         
         final PrintWriter pw = response.getWriter();
@@ -109,7 +132,7 @@ public class JcrImportExportWebConsolePlugin extends
             pw.println("<table class='content' cellpadding='0' cellspacing='0' width='100%'>");
         	titleHtml(pw,
                     "Message",
-                    msg);
+                    "<p style='color: red'>" +msg + "</p>");
             pw.println("</table>");
 
         }
@@ -134,6 +157,11 @@ public class JcrImportExportWebConsolePlugin extends
         
         pw.println("<input type='text' name='" + PAR_WORKSPACE + "' value='" + (workspace != null ? workspace : "")
                 + "' class='input' size='50'/>");
+
+        pw.println("</td></tr><tr class='content'><td class='content'>Export type</td><td class='content' colspan='2'>");
+
+        pw.println("<input type='radio' name='"+PAR_EXPORT_TYPE+"' value='document "+("document".equals(exportType)?" checked" : "") +"'>Document<br>");
+        pw.println("<input type='radio' name='"+PAR_EXPORT_TYPE+"' value='system' "+("system".equals(exportType)?" checked" : "") +">System<br>");
         
         pw.println("</td></tr><tr class='content'><td class='content'>Start path</td><td class='content' colspan='2'>");
         
@@ -172,7 +200,14 @@ public class JcrImportExportWebConsolePlugin extends
         
         pw.println("<input type='text' name='" + PAR_WORKSPACE + "' value='" + (workspace != null ? workspace : "")
                 + "' class='input' size='50'/>");
-        
+
+        pw.println("</td></tr><tr class='content'><td class='content'>Import collosion behaviour</td><td class='content' colspan='2'>");
+
+        pw.println("<input type='radio' name='"+PAR_IMPORT_BEHAVIOUR+"' value='"+ImportBehaviour.Create_New.name()+"' "+(behaviour.equals(ImportBehaviour.Create_New) ? " checked" : "") +"'>Create new<br>");
+        pw.println("<input type='radio' name='"+PAR_IMPORT_BEHAVIOUR+"' value='"+ImportBehaviour.Remove_Existing.name()+"' "+(behaviour.equals(ImportBehaviour.Remove_Existing) ? " checked" : "") +">Remove existing<br>");
+        pw.println("<input type='radio' name='"+PAR_IMPORT_BEHAVIOUR+"' value='"+ImportBehaviour.Replace_Existing.name()+"' "+(behaviour.equals(ImportBehaviour.Replace_Existing) ? " checked" : "") +"'>Replace existing<br>");
+        pw.println("<input type='radio' name='"+PAR_IMPORT_BEHAVIOUR+"' value='"+ImportBehaviour.Throw.name()+"' "+(behaviour.equals(ImportBehaviour.Throw) ? " checked" : "") +">Throw<br>");
+
         pw.println("</td></tr><tr class='content'><td class='content'>Start path</td><td class='content' colspan='2'>");
         
         pw.println("<input type='text' name='" + PAR_START_PATH + "' value='" + (startPath != null ? startPath : "")
@@ -204,17 +239,24 @@ public class JcrImportExportWebConsolePlugin extends
         final String backupPath = getParameterValue(request, PAR_DEFAULT_PATH, defaultPath);
         final String workspace = getParameterValue(request, PAR_WORKSPACE, defaultWorkspace);
         final String startPath = getParameterValue(request, PAR_START_PATH, defaultStartPath);
+        final String exportType = getParameterValue(request, PAR_EXPORT_TYPE, "system");
+        ImportBehaviour behaviour = ImportBehaviour.Replace_Existing;
+        try {
+        		behaviour = ImportBehaviour.valueOf(getParameterValue(request, PAR_IMPORT_BEHAVIOUR, ImportBehaviour.Replace_Existing.name()));
+        } catch (Exception e) {
+		}
+
         String msg = null;
 
         if ("Export".equals(request.getParameter(ATTR_SUBMIT))) {
         	try {
-        		msg = "Export finsihed successfully: "+JcrtImportExport.exportRepository(repository, workspace, backupPath, startPath);
+        		msg = "Export finsihed successfully: "+JcrtImportExport.exportRepository(repository, workspace, backupPath, startPath, "system".equals(exportType));
         	} catch (Exception e) {
         		msg = e.getMessage();
         	}
         } else if ("Import".equals(request.getParameter(ATTR_SUBMIT))) {
         	try {
-        		msg = "Import finsihed successfully: "+JcrtImportExport.importRepository(repository, workspace, backupPath, startPath);
+        		msg = "Import finsihed successfully: "+JcrtImportExport.importRepository(repository, workspace, backupPath, startPath, behaviour.num);
         	} catch (Exception e) {
         		msg = e.getMessage();
         	}
