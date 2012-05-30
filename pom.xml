@@ -25,7 +25,7 @@
 	<artifactId>org.liveSense.service.jcr.importexport</artifactId>
 	<packaging>bundle</packaging>
 	<version>1.0.1-SNAPSHOT</version>
-	<name>liveSense Import/Export Webconsole plugin for Jackrabbit </name>
+	<name>liveSense :: Webconsole :: jackrabbit Import/Export</name>
 	<description>liveSense Import/Export Webconsole plugin for Jackrabbit</description>
 
 	<build>
