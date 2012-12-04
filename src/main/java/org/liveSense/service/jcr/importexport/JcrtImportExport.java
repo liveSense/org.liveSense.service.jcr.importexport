@@ -18,6 +18,8 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.liveSense.service.jcr.importexport.webconsole.JcrImportExportWebConsolePlugin;
@@ -47,10 +49,10 @@ public class JcrtImportExport {
 	
 	private static final Logger log = LoggerFactory.getLogger(JcrtImportExport.class);
 
-	@Reference
+	@Reference(cardinality=ReferenceCardinality.MANDATORY_UNARY, policy=ReferencePolicy.DYNAMIC)
 	ConfigurationAdmin configAdmin;
 	
-	@Reference
+	@Reference(cardinality=ReferenceCardinality.MANDATORY_UNARY, policy=ReferencePolicy.DYNAMIC)
 	SlingRepository repository;
 	
 	private String backupPath = DEFAULT_BACKUP_DIR;
