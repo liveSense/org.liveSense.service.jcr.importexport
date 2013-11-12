@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><features name="liveSense-${liveSense.version}-service-jcr-importexport" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+	<feature name="liveSense-service-jcr-importexport" version="${liveSense.service.jcr.importexport.version}" description="liveSense service jcr importexport">
+        <feature>liveSense-core-sling-launchpad</feature>
+		<bundle>mvn:com.github.livesense/org.liveSense.service.jcr.importexport/${liveSense.service.jcr.importexport.version}</bundle>
+	</feature>
+</features>
