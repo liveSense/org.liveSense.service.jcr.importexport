@@ -18,9 +18,9 @@
 		<relativePath>..</relativePath>
 	</parent>
 	<scm>
-		<connection>scm:git:git://github.com/liveSense/org.liveSense.service.xssRemove.git</connection>
-		<developerConnection>scm:git:git://github.com/liveSense/org.liveSense.service.xssRemove.git</developerConnection>
-		<url>https://github.com/liveSense/org.liveSense.service.xssRemove</url>
+		<connection>scm:git:https://github.com/liveSense/org.liveSense.service.jcr.importexport.git</connection>
+		<developerConnection>scm:git:https://github.com/liveSense/org.liveSense.service.jcr.importexport.git</developerConnection>
+		<url>https://github.com/liveSense/org.liveSense.service.jcr.importexport</url>
 	</scm>
 
 	<artifactId>org.liveSense.service.jcr.importexport</artifactId>
